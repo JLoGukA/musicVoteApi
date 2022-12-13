@@ -1,4 +1,4 @@
-Recommended node packages to run this API script with Node JS:
+Recommended node packages to run this API script with Node JSS:
 
 axios
 express
