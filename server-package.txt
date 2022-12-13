@@ -1,4 +1,4 @@
-run using node js
+Recommended node packages to run this API script with Node JS:
 
 axios
 express
