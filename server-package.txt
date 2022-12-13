@@ -1,0 +1,6 @@
+run using node js
+
+axios
+express
+cors
+mysql
