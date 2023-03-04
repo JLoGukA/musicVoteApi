@@ -17,6 +17,18 @@ app.get('/', (req, res) => {
     
 });
 
+app.get('/test/pass', (req, res) => {
+    const con = mysql.createConnection({
+        host: 'localhost',
+        port: "3306",
+        user: "root",
+        password: "0000",  
+        database:"st"
+    });
+
+    con.end();
+});
+
 app.get('/get/music', (req, res) => {
     const con = mysql.createConnection({
         host: 'localhost',
@@ -44,8 +56,11 @@ app.get('/get/music', (req, res) => {
     con.end();
 });
 
+app.get('/get/sched', (req, res) => {
+    res.send("1")
+});
+
 app.get('/get/schedule', (req, res) => {
-    //console.log("SCH SENT")
     const con = mysql.createConnection({
         host: 'localhost',
         port: "3306",
@@ -60,7 +75,6 @@ app.get('/get/schedule', (req, res) => {
         if(err)throw err;
         for(var i=0; i<schnum; i++) schedule.push("\""+result[i].timebegin+"\"")
 
-        //console.log(schnum)
         response = ("{ \"time\": ["+schedule+"],")+ "\"size\": \""+schnum+"\"}";
         res.send(response)
     });
@@ -73,7 +87,6 @@ function setValue(value){
 }
 
 app.get('/get/winner',async(req, res) => {
-    //console.log("SCH SENT")
     const con = mysql.createConnection({
         host: 'localhost',
         port: "3306",
@@ -134,5 +147,5 @@ app.post('/set/votes',async (request,response)=>{
     con.end()
 });
 
-app.listen(3005)
+app.listen(3005,'localhost')
 
