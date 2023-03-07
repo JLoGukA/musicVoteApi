@@ -25,6 +25,7 @@ app.get('/test/pass', (req, res) => {
         password: "0000",  
         database:"st"
     });
+    //con.query("select if("good" in (select password from users where "root" in(select login from users)),1,0);",(err, result, fields) => {})
 
     con.end();
 });
