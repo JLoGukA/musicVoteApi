@@ -10,11 +10,37 @@ app.use(express.json());
 var mysql = require('mysql');
 const { get } = require('http');
 const { resolve } = require('path');
+var url = require( "url" );
+var queryString = require( "querystring" );
 
 var tempValue;
 
 app.get('/', (req, res) => {
     
+});
+
+app.post('/', (req, res) => {
+
+});
+
+app.post('/user/login', (req, res) => {
+    const con = mysql.createConnection({
+        host: 'localhost',
+        port: "3306",
+        user: "root",
+        password: "0000",  
+        database:"st"
+    });
+    con.query(
+    "select if(\"" +
+    req.body.pass +
+    "\" in (select password from users where \"" +
+    req.body.login + 
+    "\" in(select login from users)),1,0) as Pass;",
+    (err, result, fields) => {
+        res.send(""+result[0].Pass)
+    })
+    con.end();
 });
 
 app.get('/test/pass', (req, res) => {
@@ -25,7 +51,7 @@ app.get('/test/pass', (req, res) => {
         password: "0000",  
         database:"st"
     });
-    //con.query("select if("good" in (select password from users where "root" in(select login from users)),1,0);",(err, result, fields) => {})
+    //con.query("select if("+req.body.pass+" in (select password from users where " +req.body.login+ " in(select login from users)),1,0);",(err, result, fields) => {})
 
     con.end();
 });
