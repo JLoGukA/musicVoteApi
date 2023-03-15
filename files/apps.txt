@@ -1,0 +1,30 @@
+
+Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceClasses\{00f40965-e89d-4487-9890-87c3abb211f4}\##?#BTHENUM#Dev_30D9D98976DF#7&1db2969f&0&BluetoothDevice_30D9D98976DF#{00f40965-e89d-4487-9890-87c3abb211f4}\#\Device Parameters
+
+Computer\HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\
+
+
+
+https://linux.die.net/man/1/hivexsh
+https://pkgs.org/download/chntpw
+
+https://github.com/PDModdingCommunity/PD-Loader/wiki/2%29+Installation#installation
+
+https://askubuntu.com/questions/147491/how-can-i-map-the-apple-magic-mouse-two-finger-swipe-to-a-web-browsers-back-and
+https://github.com/RicardoEPRodrigues/magicmouse-hid
+
+qbittorrent
+svp4 pro
+winrar/rar
+node js
+mysql workbench
+kodi
+edge
+git
+discord
+avisynth
+madvr
+telegram
+apple music
+museeks music player
+onedrive

@@ -3,34 +3,126 @@ const router = require('express').Router();
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const http=require('http')
 
 app.use(cors());
 app.use(express.json());
 
-var mysql = require('mysql');
+const mysql = require('mysql2');
 const { get } = require('http');
-const { resolve } = require('path');
-var url = require( "url" );
-var queryString = require( "querystring" );
+const fs =require('fs')
+const url = require( "url" );
+const queryString = require( "querystring" );
+const FormData = require('form-data');
+const formidable = require('formidable');
 
-var tempValue;
 
-app.get('/', (req, res) => {
-    
+
+
+const con = mysql.createConnection({
+    host: 'localhost',
+    port: "3306",
+    user: "root",
+    password: "0000",  
+    database:"st"
 });
 
-app.post('/', (req, res) => {
+async function checkOnline(){
+    let queryIp=(await con.promise().query("select distinct id,ip from st.devices"))
+    
+    for(let i=0;i<queryIp[0].length;i++){
+        let str=queryIp[0][i].ip
+        http.get({host:str}, function(res) {
+        if (res.statusCode == 200) {
+          console.log("success");
+        }
+        }).on('error', function(e) {
+            con.query("delete from devices where id ="+queryIp[0][i].id,(err, result, fields) => {console.log(result)});
+        });
+    }
+}
+
+//setInterval(checkOnline,5000)
+app.get('/', (req, res) => {
+    res.sendStatus(200)
+});
+
+app.post('/file/upload',(req, res) => {
+    let options={
+        maxFileSize:20* 1024 * 1024
+    }
+    const form = new formidable.IncomingForm(options);
+    form.parse(req, (err, fields, files) => {
+        let raw = fs.readFileSync(files.file.filepath)
+        fs.writeFile(fields.saveDir+fields.fileName, raw,(err)=>{
+        })
+    });
+    res.sendStatus(200)
+
+});
+
+
+app.get('/probe',async (req,res)=>{
+    let path=__dirname+'\\files\\win.png';
+    // fs.open(__dirname+'\\files\\win.png','r',function(err,f){
+    //     if(err)console.log(err)
+    // })
+    res.sendFile(path)
+})
+
+app.post('/device/sendInfo', (req, res) => {
+
+    let array = Object.entries(req.body).map(([key,value])=>value);
+    res.sendStatus(200);
+    let ans;
+    con.query(
+    "select if(" +
+    req.body.ID + 
+    " in(select id from st.devices),1,0) as pass",(err, result, fields) => {
+        
+        if(result[0].pass)con.query("delete from st.devices where id="+req.body.ID);
+        
+        for(let i=0; i<array.length-2; i++){
+            con.query("insert st.devices(id,ip,File) values(" +
+                        req.body.ID +
+                        ",\"" +
+                        req.body.IP +
+                        "\",\"" +
+                        array[i] +
+                        "\")"
+                        ,(err, result, fields) => {})
+        }
+    }); 
+});
+
+app.get('/device/info', async (req, res) => {
+    var deviceInfo=[]
+    var deviceFile=[]
+    let tempArray=[]
+    
+    let ress = (await con.promise().query("select distinct id,ip,count(file) as cnt from st.devices group by id,ip"))
+    let queryFile=(await con.promise().query("select file from st.devices"))
+    
+    for(let i in ress[0]){
+        deviceInfo.push([ress[0][i].id,ress[0][i].ip,ress[0][i].cnt])
+    }
+    let k=0
+    for(let i=0; i<deviceInfo.length;i++){
+        deviceFile.push([])
+        for(let j=0+k;j<deviceInfo[i][2]+k;j++){
+            deviceFile[i].push(queryFile[0][j].file)
+        }
+        k+=deviceInfo[i][2]
+    }
+
+    
+
+    res.send({deviceInfo,deviceFile})
 
 });
 
 app.post('/user/login', (req, res) => {
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
+
     con.query(
     "select if(\"" +
     req.body.pass +
@@ -40,30 +132,11 @@ app.post('/user/login', (req, res) => {
     (err, result, fields) => {
         res.send(""+result[0].Pass)
     })
-    con.end();
-});
 
-app.get('/test/pass', (req, res) => {
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
-    //con.query("select if("+req.body.pass+" in (select password from users where " +req.body.login+ " in(select login from users)),1,0);",(err, result, fields) => {})
-
-    con.end();
 });
 
 app.get('/get/music', (req, res) => {
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
+    
     var musicList=[];
     var musicVotes=[];
 
@@ -80,7 +153,7 @@ app.get('/get/music', (req, res) => {
         }
         res.send([musicList,musicVotes,songsAmount,votesAmount]);
     });
-    con.end();
+
 });
 
 app.get('/get/sched', (req, res) => {
@@ -88,13 +161,7 @@ app.get('/get/sched', (req, res) => {
 });
 
 app.get('/get/schedule', (req, res) => {
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
+ 
     var schedule=[],schnum=0,response="";
 
     con.query("select max(id) id from schedul",(err, result, fields) => {schnum=result[0].id})
@@ -106,7 +173,6 @@ app.get('/get/schedule', (req, res) => {
         res.send(response)
     });
 
-    con.end();
 });
 
 function setValue(value){
@@ -114,13 +180,7 @@ function setValue(value){
 }
 
 app.get('/get/winner',async(req, res) => {
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
+
     var schedule=[],winners=0,response;
 
     var h = await new Promise((resolve) => {
@@ -139,17 +199,11 @@ app.get('/get/winner',async(req, res) => {
     })
     con.query("update st set votes=0 where votes!=0")
 
-    con.end();
+
 });
 
 app.post('/set/votes',async (request,response)=>{
-    const con = mysql.createConnection({
-        host: 'localhost',
-        port: "3306",
-        user: "root",
-        password: "0000",  
-        database:"st"
-    });
+
     queryString ="update st set votes=? where id = ?"
     con.query(queryString,[request.body.h,request.body.num+1])
     
@@ -171,8 +225,11 @@ app.post('/set/votes',async (request,response)=>{
         response.send([musicList,musicVotes,songsAmount,votesAmount]);
     });
 
-    con.end()
 });
 
-app.listen(3005,'localhost')
+process.on('exit', function () {
+    con.end();
+});
+
+app.listen(3005)
 
