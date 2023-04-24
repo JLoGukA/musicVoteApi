@@ -1,3 +1,3 @@
 # musicVoteApi
 
-API for musicVote project
+REST API сервера для проекта musicVote. 
