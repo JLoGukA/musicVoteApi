@@ -27,7 +27,7 @@ async function checkOnline(){
     for(let i=0;i<queryIp[0].length;i++){
         let str=queryIp[0][i].ip
         await axios.get("http://"+str+":80/isAlive").then((res)=>{if(res.data=="Alive")alive.push(queryIp[0][i].id)/*res.data should be "Alive"*/ }).catch((error)=>{
-            con.query("delete from sq.devices where id ="+queryIp[0][i].id,(err, result, fields) => {/*console.log(result)*/});
+            con.query("delete from sq.devices where id ="+queryIp[0][i].id,(err, result, fields) => {});
         })
     }
     return alive
@@ -65,8 +65,6 @@ app.get('/schedule/getFileInfo',async(req, res) => {
 
     con.query("select id,file from sq.devices having right(file,3)=\"wav\" or right(file,3)=\"mp3\";",(err,result,fields)=>{
 
-        if(err)console.log(err)
-
         let table=[]
 
         for(let i=0; i<result.length; i++){
@@ -81,7 +79,6 @@ app.get('/schedule/getFileInfo',async(req, res) => {
 app.get('/schedule/get',async(req, res) => {
     
     con.query("select row_num as Номер,device as устройство,unix_timestamp(date) as дата,file as файл,place as место,comment as комментарий from sq.schedule",(err,result,fields)=>{
-        if(err)console.log(err)
         let table=[[]]
         
         for(let i=0; i<fields.length; i++){
@@ -122,26 +119,24 @@ app.get('/device/playNow',async(req, ress) => {
         let decid = decodeURI(req.headers.id)
         let decip = decodeURI(req.headers.ip)
         let decfile = decodeURI(req.headers.file)
-        if(decfile!=="STOP")con.query("update sq.device_online set playing=\""+decfile+"\" where device_id="+decid,(err,result,fields)=>{if(err)console.log(err)})
+        if(decfile!=="STOP")con.query("update sq.device_online set playing=\""+decfile+"\" where device_id="+decid,(err,result,fields)=>{})
         await axios.get("http://"+decip+":80/playNow",{headers:{
             file:decfile
         }}).then((res)=>{
             if(res.data==="stop"){
-                con.query("update sq.device_online set playing=\"\" where device_id="+decid,(err,result,fields)=>{if(err)console.log(err)})
+                con.query("update sq.device_online set playing=\"\" where device_id="+decid,(err,result,fields)=>{})
             }
             ress.send(res.data)
             
         }).catch((err)=>{
             if(err){
-                console.log(err.code)
                 ress.send(err.code)
             }
         })
     }
     else if(req.headers.stop!==undefined){
         if(req.headers.stop==="stop"){
-            console.log("AUTOSTOP")
-            con.query("update sq.device_online set playing=\"\" where device_id="+req.headers.id,(err,result,fields)=>{if(err)console.log(err)})
+            con.query("update sq.device_online set playing=\"\" where device_id="+req.headers.id,(err,result,fields)=>{})
         }
         ress.sendStatus(200);
     }
@@ -153,8 +148,7 @@ app.get('/device/playNow',async(req, ress) => {
 app.get('/device/getConfig',async(req, res) => {
 
     let configs=[]
-    let queryConfig=(await con.promise().query("select * from sq.device_settings").catch((err)=>{if(err)console.log(err)}))
-    console.log(queryConfig[0].length)
+    let queryConfig=(await con.promise().query("select * from sq.device_settings").catch((err)=>{}))
     for(let i=0;i<queryConfig[0].length;i++){
         configs.push([])
         configs[i].push(queryConfig[0][i].device_id)
@@ -238,18 +232,14 @@ app.get('/schedule/edit',async(req, res) => {
         }
         else {
             deccol=dict[deccol]
-            console.log(deccol)
             decval = "\""+decval+"\""
         }
-
-        
 
         con.query("update sq.schedule set "+deccol+"="+decval+
         " where row_num="+decid+";",
         (err,result,field)=>{
             if(err){
                 res.sendStatus(406)
-                console.log(err)
             }
             else {
                 res.sendStatus(200)   
@@ -263,19 +253,12 @@ app.get('/schedule/edit',async(req, res) => {
 
         con.query("delete from sq.schedule where row_num="+decid,(err,result,field)=>{
             if(err){
-                console.log(err)
                 res.sendStatus(406)
                 return;
             }
             else{
                 res.sendStatus(200)
             }
-            // con.query("alter table schedule auto_increment = 1;",(err,result,field)=>{
-            //     if(err){
-            //         console.log(err)
-            //     }
-            //     else res.sendStatus(200)
-            // })
             
         })
         updateDeviceSchedule(decid)
@@ -283,7 +266,6 @@ app.get('/schedule/edit',async(req, res) => {
     else if(req.headers.edit==="2"){//Добавление
         con.query("insert sq.schedule() values()",(err,result,field)=>{
             if(err){
-                console.log(err)
                 res.sendStatus(406)
             }
             else res.sendStatus(200)
@@ -319,9 +301,7 @@ app.post('/file/upload',async(req, ress) => {
             }
         }
         
-        await axios.post("http://"+fields.ip+":80/upload",{raw},config).then((res)=>{/*console.log(res.statusText)*/}).catch((error)=>{
-            if(error)console.log(error)
-        })
+        await axios.post("http://"+fields.ip+":80/upload",{raw},config).then((res)=>{}).catch((error)=>{})
         await axios.get("http://"+fields.ip+":80/getResources").then((res)=>{
             ress.sendStatus(res.status)
         })
@@ -337,9 +317,7 @@ app.get('/file/download',async(req, ress) => {
     if(req.headers.gen!==undefined){
         let decname =decodeURI(req.headers.filename)
         let path = "genAudio/"+decname
-        ress.sendFile(path,options,(err)=>{
-            if(err)console.log(err)
-        })
+        ress.sendFile(path,options,(err)=>{})
     }
     else{
         let writer=fs.createWriteStream("filesToUpload/"+req.headers.filename,{highWaterMark: Math.pow(2,16)})
@@ -356,14 +334,12 @@ app.get('/file/download',async(req, ress) => {
         }).then((res)=>{
             res.data.pipe(writer)
             
-        }).catch((error)=>{console.log(error)})
+        }).catch((error)=>{})
     }
     
 })
 
 app.post('/file/delete',async(req, ress) => {
-
-    
     if(req.headers.gen!==undefined){
         let decname = decodeURI(req.headers.filename)
         await fs.promises.unlink(__dirname+"/genAudio/"+decname)
@@ -378,35 +354,59 @@ app.post('/file/delete',async(req, ress) => {
             }
         }).then((res)=>{
     
-        }).catch((error)=>{console.log(error.cause)}).then(async()=>{
+        }).catch((error)=>{}).then(async()=>{
             await axios.get("http://"+req.headers.ip+":80/getResources").then((res)=>{
                 ress.sendStatus(res.status)
             })
         })
     }
+})
 
-    
-    
+app.get('/device/updateConfig', async (req, res) => {
+    if(req.headers.value!==undefined){
+        await axios({
+            url:"http://"+req.headers.ip+":80/updateConfig",
+            method:"GET",
+            headers:{
+                "param":req.headers.param,
+                "value":decodeURI(req.headers.value)
+            }
+        }).then((resp)=>{
+            res.sendStatus(resp.status)
+        }).catch((err)=>{})
+    }
+    else res.sendStatus(400)
+})
+app.get('/device/restart', async (req, res) => {
+    if(req.headers.ip!==undefined){
+        await axios({
+            url:"http://"+req.headers.ip+":80/restart",
+            method:"GET",
+            headers:{"by":"server"}
+        }).then((resp)=>{
+            res.sendStatus(resp.status)
+        }).catch((err)=>{})
+    }
+    else res.sendStatus(400)
 })
 
 //Устройство отправляет информацию на сервер, потом сервер отправляет устройству расписание
 app.post('/device/sendInfo', async (req, res) => {
-    console.log(req.body.files.length)
 
-    con.query("delete from sq.devices where id="+req.body.ID,(err,result,fields)=>{if(err)console.log(err)});
+    con.query("delete from sq.devices where id="+req.body.ID,(err,result,fields)=>{});
         
     for(let i=0; i<req.body.files.length; i++){
         con.query("insert sq.devices(id,ip,file) values(" +
                     req.body.ID +",\"" +
                     req.body.IP +"\",\"" +
                     req.body.files[i] +"\")"
-                    ,(err, result, fields) => {if(err)console.log(err)})
+                    ,(err, result, fields) => {})
     }
     con.query("delete from sq.device_online where device_id="+req.body.ID)
     con.query("insert sq.device_online(device_id,online,playing) values("+req.body.ID+",1,\"\")")
     
     
-    con.query("delete from sq.device_settings where device_id="+req.body.ID,(err,result,fields)=>{if(err)console.log(err)})
+    con.query("delete from sq.device_settings where device_id="+req.body.ID,(err,result,fields)=>{})
     con.query(
         "insert sq.device_settings values ("+
         req.body.ID +",\"" +
@@ -444,17 +444,29 @@ app.get('/device/info', async (req, res) => {
     
     var deviceInfo=[]
     var deviceFile=[]
+    var deviceConfig=[]
     
     //let queryInfo = (await con.promise().query("select distinct id,ip,count(file) as cnt,playing from st.devices group by id,ip,playing").catch((err)=>{return}))
+    // let queryInfo = (await con.promise().query(
+    // "select distinct id,ip,count(file) as cnt,playing from sq.devices join sq.device_online on device_online.device_id=devices.id join sq.device_settings on sq.device_settings.device_id=sq.devices.id group by id,ip,playing"
+    // ).catch((err)=>{return}))
     let queryInfo = (await con.promise().query(
-    "select distinct id,ip,count(file) as cnt,playing from sq.devices join sq.device_online on device_online.device_id=devices.id group by id,ip,playing"
+    "select distinct id,ip,count(file) as cnt,playing,sq.device_settings.* from sq.devices " +
+    "join sq.device_online on device_online.device_id=devices.id "+
+    "join sq.device_settings on sq.device_settings.device_id=sq.devices.id group by id,ip,playing"
     ).catch((err)=>{return}))
     
     let queryFile=(await con.promise().query("select file from sq.devices").catch((err)=>{return}))
-
     
     for(let i in queryInfo[0]){
         deviceInfo.push([queryInfo[0][i].id,queryInfo[0][i].ip,queryInfo[0][i].cnt,queryInfo[0][i].playing])
+    }
+    for(let i in queryInfo[0]){
+        deviceConfig.push([queryInfo[0][i].id,queryInfo[0][i].volume,queryInfo[0][i].LRC,queryInfo[0][i].BCLK,
+                            queryInfo[0][i].DOUT, queryInfo[0][i].ssid,queryInfo[0][i].password,queryInfo[0][i].server_ip,
+                            queryInfo[0][i].server_port,queryInfo[0][i].ap_name,queryInfo[0][i].ap_pass,queryInfo[0][i].ntpServer,
+                            queryInfo[0][i].ntpAddTime
+                        ])
     }
     let k=0
     for(let i=0; i<deviceInfo.length;i++){
@@ -465,7 +477,7 @@ app.get('/device/info', async (req, res) => {
         k+=deviceInfo[i][2]
     }
 
-    res.send({deviceInfo,deviceFile})
+    res.send({deviceInfo,deviceFile,deviceConfig})
 
 });
 
@@ -542,8 +554,6 @@ app.get('/get/winner',async(req, res) => {
     }) 
     
     con.query("update sq.poll set votes=0 where votes!=0")
-
-
 });
 
 app.post('/set/votes',async (request,response)=>{
